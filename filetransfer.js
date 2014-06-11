@@ -2,6 +2,7 @@ var async = require('async');
 var webrtcsupport = require('webrtcsupport');
 var WildEmitter = require('wildemitter');
 var util = require('util');
+//var crypto = require('crypto');
 
 // if (!(window.File && window.FileReader && window.FileList && window.blob)) 
 //    notsupported
@@ -34,6 +35,21 @@ util.inherits(Sender, WildEmitter);
 
 Sender.prototype.send = function (file, channel) {
     this.file = file;
+
+    /*
+    // calculate the sha1 hash
+    // bad because it reads the whole file at once
+    var reader = new window.FileReader();
+    reader.onload = (function() {
+        return function(e) {
+            var sha = crypto.createHash('sha1');
+            sha.update(e.target.result);
+            console.log('hash', sha.digest('hex'));
+        };
+    })(file);
+    reader.readAsBinaryString(file);
+    */
+
     this.channel = channel;
     // FIXME: hook to channel.onopen?
     for (var start = 0; start < this.file.size; start += this.chunksize) {
