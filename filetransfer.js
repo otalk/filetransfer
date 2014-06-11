@@ -62,16 +62,12 @@ Receiver.prototype.receive = function (metadata, channel) {
     this.channel = channel;
     this.channel.onmessage = function (event) {
         // weird
-        if (webrtcsupport.prefix === 'moz') {
-            self.received += event.data.size;
-        } else {
-            self.received += event.data.byteLength; 
-        }
+        self.received += webrtcsupport.prefix === 'moz' ? event.data.size : event.data.byteLength;
         // FIXME: what if > filesize?
         self.receiveBuffer.push(event.data);
         self.emit('progress', self.received, self.metadata.size);
         if (self.received == self.metadata.size) {
-            self.emit('receivedFile', new Blob(self.receiveBuffer), self.metadata);
+            self.emit('receivedFile', new window.Blob(self.receiveBuffer), self.metadata);
             // FIXME: discard? close channel?
         }
     };
