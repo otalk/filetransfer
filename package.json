@@ -1,0 +1,28 @@
+{
+  "name": "simplewebrtc-filetransfer",
+  "description": "file sender and receiver via webrtc datachannels",
+  "version": "0.0.1",
+  "author": "Philipp Hancke <fippo@andyet.net>",
+  "dependencies": {
+    "async": "0.8.x",
+    "webrtcsupport": "0.7.x",
+    "wildemitter": "1.x"
+  },
+  "devDependencies": {
+    "browserify": "3.x",
+    "precommit-hook": "^1.0.0"
+  },
+  "homepage": "https://github.com/fippo/simplewebrtc-filetransfer",
+  "keywords": [
+    "webrtc",
+    "xmpp",
+    "jingle"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/legastero/jingle.js.git"
+  },
+  "scripts": {}
+}
