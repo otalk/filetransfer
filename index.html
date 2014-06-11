@@ -2,16 +2,15 @@
 <html>
     <head>
         <script src="FileSaver.js"></script>
+        <script src="rtcpeerconnection.bundle.js"></script>
         <script src="filetransfer.bundle.js"></script>
     </head>
     <body>
-        <input type="file" id="files" name="files[]" multiple />
-        <a id="save" target="_blank" download="test">download</a>
+        <input type="file" id="files" name="files" />
         <script>
 // file select
 function handleFileSelect(evt) {
     var file = evt.target.files[0]; // FileList object
-
     console.log('file', file.name, file.size, file.type);
 
     filesize = file.size;
@@ -24,73 +23,69 @@ function handleFileSelect(evt) {
 
     sender.send(file, sendChannel)
 }
+document.getElementById('files').addEventListener('change', handleFileSelect, false);
+
 var sender = new FileTransfer.Sender();
+sender.on('progress', function (sent, size) {
+});
 var receiver = new FileTransfer.Receiver();
 receiver.on('receivedFile', function (file, metadata) {
     saveAs(file, metadata.name);
 });
 receiver.on('progress', function (received, size) {
 });
-
-
-document.getElementById('files').addEventListener('change', handleFileSelect, false);
         </script>
         <script>
 var pc1, pc2, sendChannel, receiveChannel, pcConstraint;
 
 var servers = null;
 pcConstraint = null;
-pc1 = new webkitRTCPeerConnection(servers, pcConstraint);
-pc2 = new webkitRTCPeerConnection(servers, pcConstraint);
+pc1 = new PeerConnection(servers, pcConstraint);
+pc2 = new PeerConnection(servers, pcConstraint);
 
-pc1.onicecandidate = function (event) {
-    if (event.candidate) {
-        pc2.addIceCandidate(event.candidate);
-    }
-}; 
+pc1.on('ice', function (candidate) {
+    pc2.processIce(candidate);
+});
+pc2.on('ice', function (candidate) {
+    pc1.processIce(candidate);
+});
 
 sendChannel = pc1.createDataChannel('filetransfer', {reliable: true});
+pc2.on('addChannel', function(channel) {
+    receiver.receive(null, channel);
+});
 
-pc2.onicecandidate = function (event) {
-    if (event.candidate) {
-        pc1.addIceCandidate(event.candidate);
+var constraints = { mandatory: {
+    OfferToReceiveAudio: false,
+    OfferToReceiveVideo: false
+}};
+pc1.offer(constraints, function (err, offer) {
+    if (err) {
+        console.log('failed to create offer');
+        return;
     }
-}; 
-pc2.ondatachannel = function (event) {
-    receiver.receive(null, event.channel);
-};
-
-pc1.createOffer(
-    function (offer) {
-        pc1.setLocalDescription(offer,
-            function() { },
-            console.error
-        );
-        pc2.setRemoteDescription(offer,
-            function () {
-                pc2.createAnswer(function (answer) {
-                        pc2.setLocalDescription(answer, 
-                            function () {
-                                pc1.setRemoteDescription(answer,
-                                    function () { },
-                                    console.error
-                                );
-                            },
-                            console.error
-                        );
-                    },
-                    console.error
-                );
-            },
-            console.error
-        );
-    },
-    console.error,
-    { mandatory: {
-        OfferToReceiveAudio: false,
-        OfferToReceiveVideo: false
-    }}
-);
+    pc2.handleOffer(offer, function (err) {
+        if (err) {
+            // handle error
+            console.log('error handling offer');
+            return;
+        }
+        pc2.answer(constraints, function (err, answer) {
+            if (err) {
+                console.log('error handling answer');
+                return;
+            }
+            pc1.handleAnswer(answer, function (err) {
+                if (err) {
+                    console.log('failed to handle answer');
+                    return;
+                }
+                // FIXME: enable button
+                console.log('ready');
+            });
+        });
+    });
+});
         </script>
     </body>
 </html>
