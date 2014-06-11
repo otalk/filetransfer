@@ -21,6 +21,7 @@ function Sender() {
         var reader = new window.FileReader();
         reader.onload = (function() {
             return function(e) {
+                self.emit('progress', task.start, task.file.size);
                 self.channel.send(e.target.result);
                 window.setTimeout(next, self.pacing); // pacing
             };
@@ -60,18 +61,23 @@ Receiver.prototype.receive = function (metadata, channel) {
     }
     this.channel = channel;
     this.channel.onmessage = function (event) {
-        self.received += event.data.byteLength; 
+        // weird
+        if (webrtcsupport.prefix === 'moz') {
+            self.received += event.data.size;
+        } else {
+            self.received += event.data.byteLength; 
+        }
         // FIXME: what if > filesize?
         self.receiveBuffer.push(event.data);
         self.emit('progress', self.received, self.metadata.size);
         if (self.received == self.metadata.size) {
             self.emit('receivedFile', new Blob(self.receiveBuffer), self.metadata);
-            //saveAs(new Blob(receiveBuffer), self.metadata.filename);
             // FIXME: discard? close channel?
         }
     };
 };
 
 module.exports = {};
+module.exports.support = window && window.File && window.FileReader && window.Blob;
 module.exports.Sender = Sender;
 module.exports.Receiver = Receiver;
