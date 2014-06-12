@@ -12,17 +12,17 @@
     "browserify": "3.x",
     "precommit-hook": "^1.0.0"
   },
-  "homepage": "https://github.com/fippo/simplewebrtc-filetransfer",
+  "homepage": "https://github.com/simplewebrtc/filetransfer",
   "keywords": [
     "webrtc",
-    "xmpp",
-    "jingle"
+    "filetransfer",
+    "datachannels"
   ],
   "license": "MIT",
-  "main": "index.js",
+  "main": "filetransfer.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/legastero/jingle.js.git"
+    "url": "https://github.com/simplewebrtc/filetransfer.git"
   },
   "scripts": {}
 }
