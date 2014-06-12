@@ -40,7 +40,7 @@ function Sender(opts) {
                     self.emit('progress', task.start, task.file.size);
                 };
             })(task.file);
-            var slice = task.file.slice(task.start, task.start + task.chunksize);
+            var slice = task.file.slice(task.start, task.start + task.size);
             reader.readAsArrayBuffer(slice);
         } else if (task.type == 'complete') {
             self.emit('sentFile', {hash: self.hash.digest('hex'), algo: self.config.hash });
@@ -102,8 +102,8 @@ Receiver.prototype.receive = function (metadata, channel) {
         self.hash.update(new Uint8Array(event.data));
         self.emit('progress', self.received, self.metadata.size);
         if (self.received == self.metadata.size) {
-            metadata.hash = self.hash.digest; // not sure if that is the right thing...
-            self.emit('receivedFile', new window.Blob(self.receiveBuffer), metadata);
+            self.metadata.hash = self.hash.digest('hex'); // not sure if that is the right thing...
+            self.emit('receivedFile', new window.Blob(self.receiveBuffer), self.metadata);
             // FIXME: discard? close channel?
         } else if (self.received > self.metadata.size) {
             // FIXME
