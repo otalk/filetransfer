@@ -11,7 +11,16 @@
 // file select
 function handleFileSelect(evt) {
     var file = evt.target.files[0]; // FileList object
-    console.log('file', file.name, file.size, file.type);
+    console.log('file', file.name, file.size, file.type, file.lastModifiedDate);
+    var jingledata = {
+        date: file.lastModifiedDate,
+        desc: '...',
+        name: file.name,
+        range: null,
+        size: file.size
+    }
+    console.log('XEP-0234 data', jingledata);
+    console.log(JSON.stringify(jingledata));
 
     filesize = file.size;
 
@@ -28,8 +37,14 @@ document.getElementById('files').addEventListener('change', handleFileSelect, fa
 var sender = new FileTransfer.Sender();
 sender.on('progress', function (sent, size) {
 });
+sender.on('sentFile', function (info) {
+    console.log('sent file', info);
+    
+});
+
 var receiver = new FileTransfer.Receiver();
 receiver.on('receivedFile', function (file, metadata) {
+    console.log('received file', metadata.name,  'hash', metadata.hash);
     saveAs(file, metadata.name);
 });
 receiver.on('progress', function (received, size) {
@@ -40,8 +55,8 @@ var pc1, pc2, sendChannel, receiveChannel, pcConstraint;
 
 var servers = null;
 pcConstraint = null;
-pc1 = new PeerConnection(servers, pcConstraint);
-pc2 = new PeerConnection(servers, pcConstraint);
+pc1 = new PeerConnection({useJingle: true});
+pc2 = new PeerConnection({useJingle: true});
 
 pc1.on('ice', function (candidate) {
     pc2.processIce(candidate);
