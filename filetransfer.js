@@ -17,21 +17,23 @@ function Sender() {
     // paced sender
     // TODO: do we have to do this?
     this.processingQueue = async.queue(function (task, next) {
-        var reader = new window.FileReader();
-        reader.onload = (function() {
-            return function(e) {
-                self.emit('progress', task.start, task.file.size);
-                self.channel.send(e.target.result);
-                window.setTimeout(next, self.pacing); // pacing
+        if (task.type == 'chunk') {
+            var reader = new window.FileReader();
+            reader.onload = (function() {
+                return function(e) {
+                    self.emit('progress', task.start, task.file.size);
+                    self.channel.send(e.target.result);
+                    window.setTimeout(next, self.pacing); // pacing
 
-                // as lance points out, xep-0234 allows us to update the hash
-                // later, so we can calculate it based on the chunks
-                //self.sha.update(e.target.result);
-                //console.log('hash', sha.digest('hex'));
-            };
-        })(task.file);
-        var slice = task.file.slice(task.start, task.start + task.chunksize);
-        reader.readAsArrayBuffer(slice);
+                    self.sha.update(new Uint8Array(e.target.result));
+                };
+            })(task.file);
+            var slice = task.file.slice(task.start, task.start + task.chunksize);
+            reader.readAsArrayBuffer(slice);
+        } else if (task.type == 'complete') {
+            console.log('hash', self.sha.digest('hex'));
+            self.emit('sentFile');
+        }
     });
 }
 util.inherits(Sender, WildEmitter);
@@ -43,11 +45,15 @@ Sender.prototype.send = function (file, channel) {
     // FIXME: hook to channel.onopen?
     for (var start = 0; start < this.file.size; start += this.chunksize) {
         this.processingQueue.push({
+            type: 'chunk',
             file: file,
             start: start,
             chunksize: this.chunksize
         });
     }
+    this.processingQueue.push({
+        type: 'complete'
+    });
 };
 
 function Receiver() {
@@ -56,6 +62,7 @@ function Receiver() {
     this.received = 0;
     this.metadata = {};
     this.channel = null;
+    this.sha = crypto.createHash('sha1');
 }
 util.inherits(Receiver, WildEmitter);
 
@@ -70,8 +77,10 @@ Receiver.prototype.receive = function (metadata, channel) {
         var len = webrtcsupport.prefix === 'moz' ? event.data.size : event.data.byteLength;
         self.received += len;
         self.receiveBuffer.push(event.data);
+        self.sha.update(new Uint8Array(event.data));
         self.emit('progress', self.received, self.metadata.size);
         if (self.received == self.metadata.size) {
+            console.log('hash', self.sha.digest('hex'));
             self.emit('receivedFile', new window.Blob(self.receiveBuffer), self.metadata);
             // FIXME: discard? close channel?
         } else if (self.received > self.metadata.size) {
