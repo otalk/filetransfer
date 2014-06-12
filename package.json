@@ -1,7 +1,7 @@
 {
   "name": "simplewebrtc-filetransfer",
   "description": "file sender and receiver via webrtc datachannels",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Philipp Hancke <fippo@andyet.net>",
   "dependencies": {
     "async": "0.8.x",
