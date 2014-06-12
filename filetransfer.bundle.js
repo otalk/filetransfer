@@ -11,7 +11,7 @@ function Sender(opts) {
     var options = opts || {};
     this.config = {
         chunksize: 768,
-        pacing: 50,
+        pacing: 10,
         hash: 'sha1'
     };
     // set our config from options
