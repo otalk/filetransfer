@@ -4,15 +4,25 @@ var WildEmitter = require('wildemitter');
 var util = require('util');
 var crypto = require('crypto');
 
-function Sender() {
+function Sender(opts) {
     WildEmitter.call(this);
     var self = this;
-    this.chunksize = 768;
-    this.pacing = 50;
+    var options = opts || {};
+    this.config = {
+        chunksize: 768,
+        pacing: 50,
+        hash: 'sha1'
+    };
+    // set our config from options
+    var item;
+    for (item in options) {
+        this.config[item] = options[item];
+    }
+
     this.file = null;
     this.channel = null;
 
-    this.sha = crypto.createHash('sha1');
+    this.hash = crypto.createHash(this.config.hash);
 
     // paced sender
     // TODO: do we have to do this?
@@ -21,18 +31,19 @@ function Sender() {
             var reader = new window.FileReader();
             reader.onload = (function() {
                 return function(e) {
-                    self.emit('progress', task.start, task.file.size);
                     self.channel.send(e.target.result);
-                    window.setTimeout(next, self.pacing); // pacing
 
-                    self.sha.update(new Uint8Array(e.target.result));
+                    self.hash.update(new Uint8Array(e.target.result));
+
+                    window.setTimeout(next, self.config.pacing); // pacing
+
+                    self.emit('progress', task.start, task.file.size);
                 };
             })(task.file);
             var slice = task.file.slice(task.start, task.start + task.chunksize);
             reader.readAsArrayBuffer(slice);
         } else if (task.type == 'complete') {
-            console.log('hash', self.sha.digest('hex'));
-            self.emit('sentFile');
+            self.emit('sentFile', {hash: self.hash.digest('hex'), algo: self.config.hash });
         }
     });
 }
@@ -43,12 +54,12 @@ Sender.prototype.send = function (file, channel) {
 
     this.channel = channel;
     // FIXME: hook to channel.onopen?
-    for (var start = 0; start < this.file.size; start += this.chunksize) {
+    for (var start = 0; start < this.file.size; start += this.config.chunksize) {
         this.processingQueue.push({
             type: 'chunk',
             file: file,
             start: start,
-            chunksize: this.chunksize
+            size: this.config.chunksize
         });
     }
     this.processingQueue.push({
@@ -56,13 +67,24 @@ Sender.prototype.send = function (file, channel) {
     });
 };
 
-function Receiver() {
+function Receiver(opts) {
     WildEmitter.call(this);
+
+    var options = opts || {};
+    this.config = {
+        hash: 'sha1'
+    };
+    // set our config from options
+    var item;
+    for (item in options) {
+        this.config[item] = options[item];
+    }
     this.receiveBuffer = [];
     this.received = 0;
     this.metadata = {};
     this.channel = null;
-    this.sha = crypto.createHash('sha1');
+
+    this.hash = crypto.createHash(this.config.hash);
 }
 util.inherits(Receiver, WildEmitter);
 
@@ -77,11 +99,11 @@ Receiver.prototype.receive = function (metadata, channel) {
         var len = webrtcsupport.prefix === 'moz' ? event.data.size : event.data.byteLength;
         self.received += len;
         self.receiveBuffer.push(event.data);
-        self.sha.update(new Uint8Array(event.data));
+        self.hash.update(new Uint8Array(event.data));
         self.emit('progress', self.received, self.metadata.size);
         if (self.received == self.metadata.size) {
-            console.log('hash', self.sha.digest('hex'));
-            self.emit('receivedFile', new window.Blob(self.receiveBuffer), self.metadata);
+            metadata.hash = self.hash.digest; // not sure if that is the right thing...
+            self.emit('receivedFile', new window.Blob(self.receiveBuffer), metadata);
             // FIXME: discard? close channel?
         } else if (self.received > self.metadata.size) {
             // FIXME
