@@ -36,15 +36,16 @@ function Sender(opts) {
 
                     self.hash.update(new Uint8Array(e.target.result));
 
-                    window.setTimeout(next, self.config.pacing); // pacing
-
                     self.emit('progress', task.start, task.file.size);
+
+                    window.setTimeout(next, self.config.pacing); // pacing
                 };
             })(task.file);
             var slice = task.file.slice(task.start, task.start + task.size);
             reader.readAsArrayBuffer(slice);
         } else if (task.type == 'complete') {
             self.emit('sentFile', {hash: self.hash.digest('hex'), algo: self.config.hash });
+            next();
         }
     });
 }
