@@ -1,5 +1,5 @@
 var async = require('async');
-var webrtcsupport = require('webrtcsupport');
+//var webrtcsupport = require('webrtcsupport');
 var WildEmitter = require('wildemitter');
 var util = require('util');
 var crypto = require('crypto');
@@ -96,12 +96,15 @@ Receiver.prototype.receive = function (metadata, channel) {
     this.hash = crypto.createHash(this.config.hash);
 
     this.channel = channel;
+    // chrome only supports arraybuffers and those make it easier to calc the hash
+    channel.binaryType = 'arraybuffer';
     this.channel.onmessage = function (event) {
-        // weird
-        var len = webrtcsupport.prefix === 'moz' ? event.data.size : event.data.byteLength;
+        var len = event.data.byteLength;
         self.received += len;
         self.receiveBuffer.push(event.data);
+
         self.hash.update(new Uint8Array(event.data));
+
         self.emit('progress', self.received, self.metadata.size);
         if (self.received == self.metadata.size) {
             self.metadata.actualhash = self.hash.digest('hex');
