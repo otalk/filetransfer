@@ -104,7 +104,7 @@ Receiver.prototype.receive = function (metadata, channel) {
         self.hash.update(new Uint8Array(event.data));
         self.emit('progress', self.received, self.metadata.size);
         if (self.received == self.metadata.size) {
-            self.metadata.hash = self.hash.digest('hex'); // not sure if that is the right thing...
+            self.metadata.actualhash = self.hash.digest('hex');
             self.emit('receivedFile', new window.Blob(self.receiveBuffer), self.metadata);
             // FIXME: discard? close channel?
         } else if (self.received > self.metadata.size) {
