@@ -1,5 +1,5 @@
 {
-  "name": "simplewebrtc-filetransfer",
+  "name": "filetransfer",
   "description": "file sender and receiver via webrtc datachannels",
   "version": "0.0.3",
   "author": "Philipp Hancke <fippo@andyet.net>",
