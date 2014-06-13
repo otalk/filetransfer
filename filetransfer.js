@@ -22,8 +22,6 @@ function Sender(opts) {
     this.file = null;
     this.channel = null;
 
-    this.hash = crypto.createHash(this.config.hash);
-
     // paced sender
     // TODO: do we have to do this?
     this.processingQueue = async.queue(function (task, next) {
@@ -52,6 +50,7 @@ util.inherits(Sender, WildEmitter);
 
 Sender.prototype.send = function (file, channel) {
     this.file = file;
+    this.hash = crypto.createHash(this.config.hash);
 
     this.channel = channel;
     // FIXME: hook to channel.onopen?
@@ -85,15 +84,17 @@ function Receiver(opts) {
     this.metadata = {};
     this.channel = null;
 
-    this.hash = crypto.createHash(this.config.hash);
 }
 util.inherits(Receiver, WildEmitter);
 
 Receiver.prototype.receive = function (metadata, channel) {
     var self = this;
+
     if (metadata) {
         this.metadata = metadata;
     }
+    this.hash = crypto.createHash(this.config.hash);
+
     this.channel = channel;
     this.channel.onmessage = function (event) {
         // weird
