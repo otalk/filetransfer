@@ -15,6 +15,7 @@
   "homepage": "https://github.com/simplewebrtc/filetransfer",
   "keywords": [
     "webrtc",
+    "simplewebrtc",
     "filetransfer",
     "datachannels"
   ],
