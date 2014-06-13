@@ -44,7 +44,7 @@ sender.on('sentFile', function (info) {
 
 var receiver = new FileTransfer.Receiver();
 receiver.on('receivedFile', function (file, metadata) {
-    console.log('received file', metadata.name,  'hash', metadata.hash);
+    console.log('received file', metadata.name,  'hash', metadata.actualhash);
     saveAs(file, metadata.name);
 });
 receiver.on('progress', function (received, size) {
