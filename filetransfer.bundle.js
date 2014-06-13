@@ -107,7 +107,7 @@ Receiver.prototype.receive = function (metadata, channel) {
         if (self.received == self.metadata.size) {
             self.metadata.actualhash = self.hash.digest('hex');
             self.emit('receivedFile', new window.Blob(self.receiveBuffer), self.metadata);
-            // FIXME: discard? close channel?
+            self.receiveBuffer = []; // discard receivebuffer
         } else if (self.received > self.metadata.size) {
             // FIXME
             console.error('received more than expected, discarding...');
