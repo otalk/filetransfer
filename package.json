@@ -5,6 +5,7 @@
   "author": "Philipp Hancke <fippo@andyet.net>",
   "dependencies": {
     "async": "0.8.x",
+    "iana-hashes": "^1.0.0",
     "webrtcsupport": "0.7.x",
     "wildemitter": "1.x"
   },

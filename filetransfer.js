@@ -2,7 +2,7 @@ var async = require('async');
 //var webrtcsupport = require('webrtcsupport');
 var WildEmitter = require('wildemitter');
 var util = require('util');
-var crypto = require('crypto');
+var hashes = require('iana-hashes');
 
 function Sender(opts) {
     WildEmitter.call(this);
@@ -11,7 +11,7 @@ function Sender(opts) {
     this.config = {
         chunksize: 768,
         pacing: 10,
-        hash: 'sha1'
+        hash: 'sha-1' // note: this uses iana hash names
     };
     // set our config from options
     var item;
@@ -21,6 +21,7 @@ function Sender(opts) {
 
     this.file = null;
     this.channel = null;
+    this.hash = null;
 
     // paced sender
     // TODO: do we have to do this?
@@ -50,7 +51,7 @@ util.inherits(Sender, WildEmitter);
 
 Sender.prototype.send = function (file, channel) {
     this.file = file;
-    this.hash = crypto.createHash(this.config.hash);
+    this.hash = hashes.createHash(this.config.hash);
 
     this.channel = channel;
     // FIXME: hook to channel.onopen?
@@ -72,7 +73,7 @@ function Receiver(opts) {
 
     var options = opts || {};
     this.config = {
-        hash: 'sha1'
+        hash: 'sha-1'
     };
     // set our config from options
     var item;
@@ -83,7 +84,7 @@ function Receiver(opts) {
     this.received = 0;
     this.metadata = {};
     this.channel = null;
-
+    this.hash = null;
 }
 util.inherits(Receiver, WildEmitter);
 
@@ -93,7 +94,7 @@ Receiver.prototype.receive = function (metadata, channel) {
     if (metadata) {
         this.metadata = metadata;
     }
-    this.hash = crypto.createHash(this.config.hash);
+    this.hash = hashes.createHash(this.config.hash);
 
     this.channel = channel;
     // chrome only supports arraybuffers and those make it easier to calc the hash
