@@ -6,7 +6,7 @@
   "dependencies": {
     "async": "0.8.x",
     "iana-hashes": "^1.0.0",
-    "webrtcsupport": "0.7.x",
+    "webrtcsupport": "^1.0.0",
     "wildemitter": "1.x"
   },
   "devDependencies": {
