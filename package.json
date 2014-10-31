@@ -4,7 +4,7 @@
   "version": "1.0.1",
   "author": "Philipp Hancke <fippo@andyet.net>",
   "dependencies": {
-    "async": "0.8.x",
+    "async": "^0.9.0",
     "iana-hashes": "^1.0.0",
     "webrtcsupport": "^1.0.0",
     "wildemitter": "1.x"
