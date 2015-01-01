@@ -10,7 +10,7 @@ function Sender(opts) {
     var self = this;
     var options = opts || {};
     this.config = {
-        chunksize: 768,
+        chunksize: 16384,
         pacing: 10,
         hash: 'sha-1' // note: this uses iana hash names
     };
