@@ -33,7 +33,9 @@ function Sender(opts) {
                 return function(e) {
                     self.channel.send(e.target.result);
 
-                    self.hash.update(new Uint8Array(e.target.result));
+                    if (self.hash) {
+                        self.hash.update(new Uint8Array(e.target.result));
+                    }
 
                     self.emit('progress', task.start, task.file.size);
 
@@ -43,7 +45,7 @@ function Sender(opts) {
             var slice = task.file.slice(task.start, task.start + task.size);
             reader.readAsArrayBuffer(slice);
         } else if (task.type == 'complete') {
-            self.emit('sentFile', {hash: self.hash.digest('hex'), algo: self.config.hash });
+            self.emit('sentFile', self.hash ? {hash: self.hash.digest('hex'), algo: self.config.hash } : null);
             next();
         }
     });
@@ -52,7 +54,9 @@ util.inherits(Sender, WildEmitter);
 
 Sender.prototype.send = function (file, channel) {
     this.file = file;
-    this.hash = hashes.createHash(this.config.hash);
+    if (this.config.hash) {
+        this.hash = hashes.createHash(this.config.hash);
+    }
 
     this.channel = channel;
     // FIXME: hook to channel.onopen?
@@ -95,7 +99,9 @@ Receiver.prototype.receive = function (metadata, channel) {
     if (metadata) {
         this.metadata = metadata;
     }
-    this.hash = hashes.createHash(this.config.hash);
+    if (this.config.hash) {
+        this.hash = hashes.createHash(this.config.hash);
+    }
 
     this.channel = channel;
     // chrome only supports arraybuffers and those make it easier to calc the hash
@@ -105,11 +111,16 @@ Receiver.prototype.receive = function (metadata, channel) {
         self.received += len;
         self.receiveBuffer.push(event.data);
 
-        self.hash.update(new Uint8Array(event.data));
+        if (self.hash) {
+            self.hash.update(new Uint8Array(event.data));
+        }
 
         self.emit('progress', self.received, self.metadata.size);
+        console.log(self.received, self.metadata.size);
         if (self.received == self.metadata.size) {
-            self.metadata.actualhash = self.hash.digest('hex');
+            if (self.hash) {
+                self.metadata.actualhash = self.hash.digest('hex');
+            }
             self.emit('receivedFile', new window.Blob(self.receiveBuffer), self.metadata);
             self.receiveBuffer = []; // discard receivebuffer
         } else if (self.received > self.metadata.size) {
