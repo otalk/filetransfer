@@ -116,7 +116,6 @@ Receiver.prototype.receive = function (metadata, channel) {
         }
 
         self.emit('progress', self.received, self.metadata.size);
-        console.log(self.received, self.metadata.size);
         if (self.received == self.metadata.size) {
             if (self.hash) {
                 self.metadata.actualhash = self.hash.digest('hex');
