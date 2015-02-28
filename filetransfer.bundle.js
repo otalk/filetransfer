@@ -45,6 +45,7 @@ function Sender(opts) {
             var slice = task.file.slice(task.start, task.start + task.size);
             reader.readAsArrayBuffer(slice);
         } else if (task.type == 'complete') {
+            self.emit('progress', task.file.size, task.file.size);
             self.emit('sentFile', self.hash ? {hash: self.hash.digest('hex'), algo: self.config.hash } : null);
             next();
         }
