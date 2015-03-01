@@ -1,10 +1,8 @@
-var async = require('async');
 var WildEmitter = require('wildemitter');
 var util = require('util');
 
 function Sender(opts) {
     WildEmitter.call(this);
-    var self = this;
     var options = opts || {};
     this.config = {
         chunksize: 16384,
@@ -18,43 +16,31 @@ function Sender(opts) {
 
     this.file = null;
     this.channel = null;
-
-    this.processingQueue = async.queue(function (task, next) {
-        if (task.type == 'chunk') {
-            var reader = new window.FileReader();
-            reader.onload = (function() {
-                return function(e) {
-                    self.channel.send(e.target.result);
-                    self.emit('progress', task.start, task.file.size, e.target.result);
-                    window.setTimeout(next, self.config.pacing); // pacing
-                };
-            })(task.file);
-            var slice = task.file.slice(task.start, task.start + task.size);
-            reader.readAsArrayBuffer(slice);
-        } else if (task.type == 'complete') {
-            self.emit('progress', self.file.size, self.file.size);
-            self.emit('sentFile');
-            next();
-        }
-    });
 }
 util.inherits(Sender, WildEmitter);
 
 Sender.prototype.send = function (file, channel) {
+    var self = this;
     this.file = file;
     this.channel = channel;
-    // FIXME: hook to channel.onopen?
-    for (var start = 0; start < this.file.size; start += this.config.chunksize) {
-        this.processingQueue.push({
-            type: 'chunk',
-            file: file,
-            start: start,
-            size: this.config.chunksize
-        });
-    }
-    this.processingQueue.push({
-        type: 'complete'
-    });
+    var sliceFile = function(offset) {
+        var reader = new window.FileReader();
+        reader.onload = (function() {
+            return function(e) {
+                self.channel.send(e.target.result);
+                self.emit('progress', offset, file.size, e.target.result);
+                if (file.size > offset + e.target.result.byteLength) {
+                    window.setTimeout(sliceFile, self.config.pacing, offset + self.config.chunksize);
+                } else {
+                    self.emit('progress', file.size, file.size, null);
+                    self.emit('sentFile');
+                }
+            };
+        })(file);
+        var slice = file.slice(offset, offset + self.config.chunksize);
+        reader.readAsArrayBuffer(slice);
+    };
+    window.setTimeout(sliceFile, 0, 0);
 };
 
 function Receiver() {
