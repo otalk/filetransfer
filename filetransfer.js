@@ -68,7 +68,7 @@ Receiver.prototype.receive = function (metadata, channel) {
         self.receiveBuffer.push(event.data);
 
         self.emit('progress', self.received, self.metadata.size, event.data);
-        if (self.received == self.metadata.size) {
+        if (self.received === self.metadata.size) {
             self.emit('receivedFile', new window.Blob(self.receiveBuffer), self.metadata);
             self.receiveBuffer = []; // discard receivebuffer
         } else if (self.received > self.metadata.size) {
