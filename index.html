@@ -79,10 +79,9 @@ receiver.on('progress', function (received, size) {
 });
         </script>
         <script>
-var pc1, pc2, sendChannel, receiveChannel, pcConstraint;
+var pc1, pc2, sendChannel, receiveChannel;
 
 var servers = null;
-pcConstraint = null;
 pc1 = new PeerConnection({useJingle: true});
 pc2 = new PeerConnection({useJingle: true});
 
@@ -95,7 +94,8 @@ pc2.on('ice', function (candidate) {
 
 sendChannel = pc1.createDataChannel('filetransfer', {reliable: true});
 pc2.on('addChannel', function(channel) {
-    receiver.receive(null, channel);
+    receiveChannel = channel;
+    receiver.receive({}, channel);
 });
 
 var constraints = { mandatory: {
