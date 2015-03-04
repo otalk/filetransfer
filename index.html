@@ -92,7 +92,7 @@ pc2.on('ice', function (candidate) {
     pc1.processIce(candidate);
 });
 
-sendChannel = pc1.createDataChannel('filetransfer', {reliable: true});
+sendChannel = pc1.createDataChannel('filetransfer');
 pc2.on('addChannel', function(channel) {
     receiveChannel = channel;
     receiver.receive({}, channel);
