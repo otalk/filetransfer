@@ -56,6 +56,14 @@ util.inherits(Receiver, WildEmitter);
 Receiver.prototype.receive = function () {
     this.base.receive.apply(this.base, arguments);
 };
+Object.defineProperty(Receiver.prototype, 'metadata', {
+    get: function () {
+        return this.base.metadata;
+    },
+    set: function (value) {
+        this.base.metadata = value;
+    }
+});
 
 module.exports = {};
 module.exports.support = base.support;
