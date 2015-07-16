@@ -82,7 +82,7 @@ Receiver.prototype.receive = function (metadata, channel) {
 };
 
 module.exports = {};
-module.exports.support = window && window.File && window.FileReader && window.Blob;
+module.exports.support = typeof window !== 'undefined' && window && window.File && window.FileReader && window.Blob;
 module.exports.Sender = Sender;
 module.exports.Receiver = Receiver;
 
@@ -796,6 +796,7 @@ the event name as the first argument.
 module.exports = WildEmitter;
 
 function WildEmitter() {
+    this.isWildEmitter = true;
     this.callbacks = {};
 }
 
@@ -859,6 +860,9 @@ WildEmitter.prototype.off = function (event, fn) {
     // remove specific handler
     i = callbacks.indexOf(fn);
     callbacks.splice(i, 1);
+    if (callbacks.length === 0) {
+        delete this.callbacks[event];
+    }
     return this;
 };
 
