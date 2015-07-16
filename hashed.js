@@ -1,11 +1,13 @@
+var WildEmitter = require('wildemitter');
 var util = require('util');
 var hashes = require('iana-hashes');
 var base = require('./filetransfer');
 
 // drop-in replacement for filetransfer which also calculates hashes
 function Sender(opts) {
-    base.Sender.call(this, opts);
+    WildEmitter.call(this);
     var self = this;
+    this.base = new base.Sender(opts);
 
     var options = opts || {};
     if (!options.hash) {
@@ -13,21 +15,25 @@ function Sender(opts) {
     }
     this.hash = hashes.createHash(options.hash);
 
-    this.on('progress', function (start, size, data) {
+    this.base.on('progress', function (start, size, data) {
         self.emit('progress', start, size, data);
         if (data) {
             self.hash.update(new Uint8Array(data));
         }
     });
-    this.on('sentFile', function () {
-        self.emit('sentFile', {hash: self.hash.digest('hex'), algo: self.config.hash });
+    this.base.on('sentFile', function () {
+        self.emit('sentFile', {hash: self.hash.digest('hex'), algo: options.hash });
     });
 }
-util.inherits(Sender, base.Sender);
+util.inherits(Sender, WildEmitter);
+Sender.prototype.send = function () {
+    this.base.send.apply(this.base, arguments);
+};
 
 function Receiver(opts) {
-    base.Receiver.call(this, opts);
+    WildEmitter.call(this);
     var self = this;
+    this.base = new base.Receiver(opts);
 
     var options = opts || {};
     if (!options.hash) {
@@ -35,18 +41,21 @@ function Receiver(opts) {
     }
     this.hash = hashes.createHash(options.hash);
 
-    this.on('progress', function (start, size, data) {
+    this.base.on('progress', function (start, size, data) {
         self.emit('progress', start, size, data);
         if (data) {
             self.hash.update(new Uint8Array(data));
         }
     });
-    this.on('receivedFile', function (file, metadata) {
+    this.base.on('receivedFile', function (file, metadata) {
         metadata.actualhash = self.hash.digest('hex');
         self.emit('receivedFile', file, metadata);
     });
 }
-util.inherits(Receiver, base.Receiver);
+util.inherits(Receiver, WildEmitter);
+Receiver.prototype.receive = function () {
+    this.base.receive.apply(this.base, arguments);
+};
 
 module.exports = {};
 module.exports.support = base.support;
