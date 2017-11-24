@@ -24,8 +24,7 @@ Sender.prototype.send = function (file, channel) {
     this.file = file;
     this.channel = channel;
     var usePoll = typeof channel.bufferedAmountLowThreshold !== 'number';
-    var offset = 0;
-    var sliceFile = function() {
+    var sliceFile = function(offset) {
         var reader = new window.FileReader();
         reader.onload = (function() {
             return function(e) {
@@ -34,9 +33,9 @@ Sender.prototype.send = function (file, channel) {
 
                 if (file.size > offset + e.target.result.byteLength) {
                     if (usePoll) {
-                        window.setTimeout(sliceFile, self.config.pacing);
+                        window.setTimeout(sliceFile, self.config.pacing, offset + self.config.chunksize);
                     } else if (channel.bufferedAmount <= channel.bufferedAmountLowThreshold) {
-                        window.setTimeout(sliceFile, 0);
+                        window.setTimeout(sliceFile, 0, offset + self.config.chunksize);
                     } else {
                         // wait for bufferedAmountLow to fire
                     }
@@ -44,7 +43,6 @@ Sender.prototype.send = function (file, channel) {
                     self.emit('progress', file.size, file.size, null);
                     self.emit('sentFile');
                 }
-                offset = offset + self.config.chunksize;
             };
         })(file);
         var slice = file.slice(offset, offset + self.config.chunksize);
@@ -54,7 +52,7 @@ Sender.prototype.send = function (file, channel) {
         channel.bufferedAmountLowThreshold = 8 * this.config.chunksize;
         channel.addEventListener('bufferedamountlow', sliceFile);
     }
-    window.setTimeout(sliceFile, 0);
+    sliceFile(0);
 };
 
 function Receiver() {
