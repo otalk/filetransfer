@@ -52,7 +52,7 @@ Sender.prototype.send = function (file, channel) {
         channel.bufferedAmountLowThreshold = 8 * this.config.chunksize;
         channel.addEventListener('bufferedamountlow', sliceFile);
     }
-    sliceFile(0);
+    window.setTimeout(sliceFile, 0, 0);
 };
 
 function Receiver() {
